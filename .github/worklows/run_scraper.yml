@@ -2,31 +2,30 @@ name: Weekly Banking Scraper
 
 on:
   schedule:
-    # Запуск каждый понедельник в 09:00 по Гринвичу (UTC)
-    - cron: '0 9 * * 1'
-  workflow_dispatch: # Добавляет кнопку ручного запуска в интерфейсе
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
     steps:
-    - name: Проверка репозитория
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Настройка Python
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: "3.12"
 
-    - name: Установка зависимостей
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install google-play-scraper itunes-app-scraper-dmi pandas matplotlib requests numpy
 
-    - name: Запуск парсера
+    - name: Run script
       run: python parse_banks.py
 
-    - name: Сохранение результатов в репозиторий
+    - name: Save results
       run: |
         git config --global user.name 'Weekly BI Bot'
         git config --global user.email 'bot@github.com'
