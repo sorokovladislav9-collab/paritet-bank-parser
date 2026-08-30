@@ -13,8 +13,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -30,17 +28,8 @@ jobs:
       run: python parse_banks.py
 
     - name: Save results
-      run: |
-        git config --global user.name 'Weekly BI Bot'
-        git config --global user.email 'bot@github.com'
-        
-        # Шаг 1: Сначала индексируем и коммитим новые файлы на виртуалке
-        git add banking_apps_history.csv dashboard_*.png
-        git commit -m "Автоматическое обновление данных" || exit 0
-        
-        # Шаг 2: Теперь безопасно подтягиваем README.md с сайта, склеивая ветки
-        git pull origin main --rebase
-        
-        # Шаг 3: Спокойно пушим в облако с правами токена
-        git push https://${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git main
-
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "Автоматическое обновление данных"
+        file_pattern: 'banking_apps_history.csv dashboard_*.png'
+        branch: main
