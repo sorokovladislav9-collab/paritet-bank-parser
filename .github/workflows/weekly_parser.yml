@@ -31,13 +31,16 @@ jobs:
 
     - name: Save results
       run: |
-        # Синхронизируем ветку перед коммитом
-        git pull origin main --rebase
-        
         git config --global user.name 'Weekly BI Bot'
         git config --global user.email 'bot@github.com'
+        
+        # Шаг 1: Сначала индексируем и коммитим новые файлы на виртуалке
         git add banking_apps_history.csv dashboard_*.png
         git commit -m "Автоматическое обновление данных" || exit 0
         
-        # Пушим напрямую через системный токен авторизации
+        # Шаг 2: Теперь безопасно подтягиваем README.md с сайта, склеивая ветки
+        git pull origin main --rebase
+        
+        # Шаг 3: Спокойно пушим в облако с правами токена
         git push https://${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git main
+
