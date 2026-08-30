@@ -26,10 +26,7 @@ jobs:
       run: python parse_banks.py
 
     - name: Save results
-      run: |
-        git config --global user.name 'Weekly BI Bot'
-        git config --global user.email 'bot@github.com'
-        git add banking_apps_history.csv dashboard_*.png
-        git commit -m "Автоматическое обновление данных: $(date +'%Y-%m-%d')" || exit 0
-        git pull --rebase origin main
-        git push origin main
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "Автоматическое обновление данных"
+        file_pattern: 'banking_apps_history.csv dashboard_*.png'
