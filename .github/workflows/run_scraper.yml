@@ -31,4 +31,6 @@ jobs:
         git config --global user.email 'bot@github.com'
         git add banking_apps_history.csv dashboard_*.png
         git commit -m "Автоматическое обновление данных: $(date +'%Y-%m-%d')" || exit 0
-        git push
+        git pull --rebase origin main
+        git push origin main
+
