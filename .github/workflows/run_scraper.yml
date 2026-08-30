@@ -8,9 +8,16 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    # Явно даем роботу права на чтение и запись в этот репозиторий
+    permissions:
+      contents: write
+      
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        # Указываем сохранять историю изменений для корректного слияния
+        fetch-depth: 0 
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -26,7 +33,14 @@ jobs:
       run: python parse_banks.py
 
     - name: Save results
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: "Автоматическое обновление данных"
-        file_pattern: 'banking_apps_history.csv dashboard_*.png'
+      run: |
+        git config --global user.name 'Weekly BI Bot'
+        git config --global user.email 'bot@github.com'
+        git add banking_apps_history.csv dashboard_*.png
+        git commit -m "Автоматическое обновление данных: $(date +'%Y-%m-%d')" || exit 0
+        
+        # Забираем изменения из облака, автоматически склеивая их без конфликтов
+        git pull origin main --rebase --autostash
+        
+        # Пушим, используя системный токен авторизации
+        git push https://${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git main
