@@ -25,7 +25,7 @@ CSV_FILE = "banking_apps_history.csv"
 # Получаем текущую дату для формирования уникального имени картинки
 CURRENT_DATE = datetime.date.today().strftime("%Y-%m-%d")
 # Динамическое имя для дашборда
-DASHBOARD_FILE = f"dashboard_{CURRENT_DATE}.png"
+DASHBOARD_FILE = f"dashboards/dashboard_{CURRENT_DATE}.png"
 
 def collect_store_data():
     """Сбор текущих срезов и точной детализации оценок (1-5 звезд)."""
