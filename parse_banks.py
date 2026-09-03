@@ -10,7 +10,6 @@ import numpy as np
 from google_play_scraper import app as gp_app
 from itunes_app_scraper.scraper import AppStoreScraper
 
-# 1. СПИСОК ПРИЛОЖЕНИЙ ДЛЯ ФИЗЛИЦ (RETAIL)
 APPS = {
     "Paritetbank (iParitet)": {"play_id": "by.iparitet", "apple_id": "1543156711"},
     "Belarusbank (M-Belarusbank)": {"play_id": "com.mobicon.mbank2.belarusbank", "apple_id": "549469274"},
@@ -20,12 +19,9 @@ APPS = {
     "Alfa-Bank (INSNC)": {"play_id": "by.alfabank.app.insnc3", "apple_id": None}
 }
 
-# Единая накопительная база данных
 CSV_FILE = "banking_apps_history.csv"
-# Получаем текущую дату для формирования уникального имени картинки
 CURRENT_DATE = datetime.date.today().strftime("%Y-%m-%d")
-# Динамическое имя для дашборда
-DASHBOARD_FILE = f"dashboards/dashboard_{CURRENT_DATE}.png"
+DASHBOARD_FILE = f"dashboard_{CURRENT_DATE}.png"
 
 def collect_store_data():
     """Сбор текущих срезов и точной детализации оценок (1-5 звезд)."""
@@ -35,7 +31,6 @@ def collect_store_data():
     print(f"[1/3] Сбор данных и детальной структуры оценок на дату: {CURRENT_DATE}")
     
     for bank, ids in APPS.items():
-        # Сбор из Google Play (получаем реальную структуру оценок)
         play_rating, p1, p2, p3, p4, p5 = None, 0, 0, 0, 0, 0
         try:
             gp_info = gp_app(ids["play_id"], lang="ru", country="by")
@@ -45,7 +40,6 @@ def collect_store_data():
         except Exception as e:
             print(f"  [Ошибка GP] {bank}: {e}")
 
-        # Сбор из App Store
         apple_rating, a1, a2, a3, a4, a5 = None, 0, 0, 0, 0, 0
         if ids["apple_id"]:
             try:
@@ -54,7 +48,6 @@ def collect_store_data():
                     apple_rating = ap_info.get('averageUserRating')
                     total_as = ap_info.get('userRatingCount', 0)
                     
-                    # Моделируем детализацию для App Store на основе его рейтинга
                     if apple_rating and total_as > 0:
                         if apple_rating >= 4.5:
                             a5, a4, a3, a2, a1 = int(total_as*0.85), int(total_as*0.08), int(total_as*0.04), int(total_as*0.01), int(total_as*0.02)
@@ -65,7 +58,6 @@ def collect_store_data():
             except Exception as e:
                 print(f"  [Ошибка AS] {bank}: {e}")
 
-        # Агрегируем общие показатели (GP + AS) по звездам для финансового дашборда
         total_1 = p1 + a1
         total_2 = p2 + a2
         total_3 = p3 + a3
@@ -77,7 +69,6 @@ def collect_store_data():
             CURRENT_DATE, bank, combined_rating, total_1, total_2, total_3, total_4, total_5
         ])
     
-    # СОХРАНЕНИЕ ИСТОРИИ (Требование №2)
     file_exists = os.path.isfile(CSV_FILE)
     with open(CSV_FILE, mode="a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
@@ -93,7 +84,6 @@ def generate_report_and_visualization():
 
     df = pd.read_csv(CSV_FILE)
     
-    # ГЕНЕРАЦИЯ СИНТЕТИКИ (Если файл пустой или это самый первый запуск)
     if len(df['Date'].unique()) < 2:
         print("[2/3] Накопленной истории нет. Генерируем ретроспективу за 5 недель...")
         synthetic_data = []
@@ -135,10 +125,8 @@ def generate_report_and_visualization():
 
     print(f"[3/3] Отрисовка архивного дашборда: {DASHBOARD_FILE}...")
     
-    # НАСТРОЙКА ДВУХПАНЕЛЬНОГО ГРАФИКА
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 7))
     
-    # Панель 1: Динамика рейтинга
     for bank in df['Bank'].unique():
         bank_df = df[df['Bank'] == bank].sort_values(by='Date')
         ax1.plot(bank_df['Date'], bank_df['Rating'], marker='o', label=bank, linewidth=2.5)
@@ -150,7 +138,6 @@ def generate_report_and_visualization():
     ax1.grid(True, linestyle="--", alpha=0.5)
     ax1.legend(loc="lower left", fontsize=9)
     
-    # Панель 2: Детализация оценок на последнюю дату
     latest_date = df['Date'].max()
     latest_df = df[df['Date'] == latest_date]
     
@@ -181,13 +168,11 @@ def generate_report_and_visualization():
     plt.suptitle(f"BI-отчет Финансового департамента по мобильным приложениям (Срез {latest_date})", fontsize=16, fontweight='bold', y=0.98)
     plt.tight_layout()
     
-    # СОХРАНЕНИЕ С ИСПОЛЬЗОВАНИЕМ ДИНАМИЧЕСКОГО ИМЕНИ
     plt.savefig(DASHBOARD_FILE, dpi=300)
     plt.close()
     print(f"[Успешно] Комплексный архивный дашборд сохранен как '{DASHBOARD_FILE}'")
 
 if __name__ == "__main__":
-    # Сначала удалите старый .csv с Рабочего стола, чтобы структура пересоздалась чисто
     collect_store_data()
     generate_report_and_visualization()
     print("\n[Выполнение завершено] Данные и дашборд успешно заархивированы.")
