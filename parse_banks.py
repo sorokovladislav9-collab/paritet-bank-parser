@@ -170,15 +170,16 @@ def generate_report_and_visualization():
     df_pct = df_latest.set_index("Bank")[stars_columns]
     df_pct = df_pct.div(df_pct.sum(axis=1), axis=0).fillna(0) * 100
 
-    # Строим горизонтальный стек-бар
+    # ИСПРАВЛЕНО: Заменили height=0.6 на width=0.6, так как для barh в pandas толщина задается через width
     df_pct.plot(
         kind="barh",
         stacked=True,
         ax=ax2,
         color=["#e74c3c", "#e67e22", "#f1c40f", "#3498db", "#2ecc71"],
         edgecolor="black",
-        height=0.6,
+        width=0.6,
     )
+
 
     ax2.set_xlim(0, 100)
     ax2.set_xlabel("Доля оценок в % (Данные Google Play)")
