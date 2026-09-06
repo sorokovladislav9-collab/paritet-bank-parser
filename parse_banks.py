@@ -122,82 +122,99 @@ def collect_store_data():
 
 
 def generate_report_and_visualization():
-    """Чтение истории из CSV и генерация графиков."""
+    """Генерация графиков в точном соответствии с исходным визуальным стилем."""
     if not os.path.isfile(CSV_FILE):
         print(f"[Ошибка] Файл {CSV_FILE} не найден. Нечего визуализировать.")
         return
 
     # Читаем данные
     df = pd.read_csv(CSV_FILE)
-
-    # Берем только самые свежие данные для построения структуры оценок
-    latest_date = df["Date"].max()
-    df_latest = df[df["Date"] == latest_date]
-
-    # Настройка сетки графиков (1 строка, 2 колонки)
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
-
-    # График 1: Текущий комбинированный рейтинг банков
-    banks = df_latest["Bank"]
-    ratings = df_latest["Rating"]
     
-    # ИСПРАВЛЕНО: Используем современный способ получения палитры цветов
-    colors = plt.colormaps["viridis"](np.linspace(0, 1, len(banks)))
+    # Сортируем по дате для правильного отображения временных линий
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.sort_values("Date")
+    df["Date_Str"] = df["Date"].dt.strftime("%Y-%m-%d")
 
-    bars = ax1.barh(banks, ratings, color=colors, edgecolor="black", height=0.6)
-    ax1.set_xlim(0, 5.5)
-    ax1.set_xlabel("Комбинированный рейтинг (0-5)")
-    ax1.set_title(f"Сравнение рейтингов банков на {latest_date}")
-    ax1.grid(axis="x", linestyle="--", alpha=0.7)
+    # Создаем холст (1 строка, 2 колонки)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 7))
+    fig.suptitle(f"BI-отчет Финансового департамента по мобильным приложениям (Срез {CURRENT_DATE})", fontsize=14, weight="bold")
 
-    # Добавляем подписи со значениями рейтингов на столбцы
-    for bar in bars:
-        width = bar.get_width()
-        ax1.text(
-            width + 0.05,
-            bar.get_y() + bar.get_height() / 2,
-            f"{width:.2f}",
-            va="center",
-            ha="left",
-            fontsize=10,
-            weight="bold",
-        )
+    # -------------------------------------------------------------
+    # ГРАФИК 1: Динамика общих рейтингов розничных приложений (Линейный)
+    # -------------------------------------------------------------
+    ax1.set_title("1. Динамика общих рейтингов розничных приложений", fontsize=11, weight="bold", pad=10)
+    
+    # Группируем данные по банкам и строим линию для каждого
+    for bank in APPS.keys():
+        bank_df = df[df["Bank"] == bank]
+        if not bank_df.empty:
+            ax1.plot(
+                bank_df["Date_Str"], 
+                bank_df["Rating"], 
+                marker="o", 
+                linewidth=1.8, 
+                markersize=5, 
+                label=bank
+            )
+            
+    ax1.set_ylim(2.0, 5.1)
+    ax1.set_ylabel("Средний балл приложения", fontsize=10)
+    ax1.set_xlabel("Дата еженедельного среза", fontsize=10)
+    ax1.grid(True, linestyle="--", alpha=0.5)
+    ax1.legend(loc="lower left", fontsize=8[-1])
 
-    # График 2: Структура распределения реальных оценок (1-5 звезд из GP)
+    # -------------------------------------------------------------
+    # ГРАФИК 2: Детализация структуры оценок (Вертикальный сгруппированный)
+    # -------------------------------------------------------------
+    ax2.set_title(f"2. Детализация структуры оценок (Срез на {CURRENT_DATE})", fontsize=11, weight="bold", pad=10)
+    
+    # Для структуры оценок берем только самую последнюю дату
+    latest_date_str = df["Date_Str"].max()
+    df_latest = df[df["Date_Str"] == latest_date_str].set_index("Bank")
+    
     stars_columns = ["1_Star", "2_Star", "3_Star", "4_Star", "5_Star"]
+    stars_labels = ["1★", "2★", "3★", "4★", "5★"]
+    colors = ["#e74c3c", "#e67e22", "#f1c40f", "#3498db", "#2ecc71"] # Цвета под каждую звезду
 
-    # Переводим абсолютные значения в проценты для наглядности
-    df_pct = df_latest.set_index("Bank")[stars_columns]
-    df_pct = df_pct.div(df_pct.sum(axis=1), axis=0).fillna(0) * 100
+    # Перестраиваем структуру датафрейма для сгруппированного графика
+    # Выбираем только те банки, которые есть в APPS и присутствуют в срезе
+    existing_banks = [b for b in APPS.keys() if b in df_latest.index]
+    df_stars = df_latest.loc[existing_banks, stars_columns]
 
-    # ИСПРАВЛЕНО: Заменили height=0.6 на width=0.6, так как для barh в pandas толщина задается через width
-    df_pct.plot(
-        kind="barh",
-        stacked=True,
+    # Строим сгруппированные вертикальные столбцы через pandas
+    df_stars.plot(
+        kind="bar",
         ax=ax2,
-        color=["#e74c3c", "#e67e22", "#f1c40f", "#3498db", "#2ecc71"],
-        edgecolor="black",
-        width=0.6,
+        color=colors,
+        edgecolor="darkgray",
+        linewidth=0.5,
+        width=0.8
     )
-
-
-    ax2.set_xlim(0, 100)
-    ax2.set_xlabel("Доля оценок в % (Данные Google Play)")
-    ax2.set_title("Структура отзывов (от 1 до 5 звезд)")
+    
+    # Включаем логарифмическую шкалу по оси Y, как на оригинале (10^1, 10^2, 10^3...)
+    ax2.set_yscale("log")
+    ax2.set_ylabel("Количество выставленных оценок (Log scale)", fontsize=10)
+    ax2.set_xlabel("", fontsize=10)
+    ax2.grid(True, which="both", linestyle="--", alpha=0.3)
+    
+    # Поворачиваем имена банков горизонтально или слегка под углом для читаемости
+    ax2.set_xticklabels(existing_banks, rotation=15, ha="right", fontsize=9)
+    
     ax2.legend(
-        ["1 ⭐", "2 ⭐", "3 ⭐", "4 ⭐", "5 ⭐"],
-        bbox_to_anchor=(1.05, 1),
+        stars_labels,
+        title="Звезды",
+        bbox_to_anchor=(1.02, 1),
         loc="upper left",
+        fontsize=9
     )
-    ax2.grid(axis="x", linestyle="--", alpha=0.7)
 
+    # Корректируем расположение элементов и сохраняем
     plt.tight_layout()
     plt.savefig(DASHBOARD_FILE, dpi=150)
     plt.close()
 
-    print(
-        f"[Успешно] Комплексный архивный дашборд сохранен как '{DASHBOARD_FILE}'"
-    )
+    print(f"[Успешно] Комплексный архивный дашборд сохранен как '{DASHBOARD_FILE}'")
+
 
 
 
