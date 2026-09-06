@@ -163,7 +163,7 @@ def generate_report_and_visualization():
     ax1.grid(True, linestyle="--", alpha=0.5)
     ax1.legend(loc="lower left", fontsize=8)
 
-    # -------------------------------------------------------------
+        # -------------------------------------------------------------
     # ГРАФИК 2: Детализация структуры оценок (Вертикальный сгруппированный)
     # -------------------------------------------------------------
     ax2.set_title(f"2. Детализация структуры оценок (Срез на {CURRENT_DATE})", fontsize=11, weight="bold", pad=10)
@@ -177,28 +177,28 @@ def generate_report_and_visualization():
     colors = ["#e74c3c", "#e67e22", "#f1c40f", "#3498db", "#2ecc71"] # Цвета под каждую звезду
 
     # Перестраиваем структуру датафрейма для сгруппированного графика
-    # Выбираем только те банки, которые есть в APPS и присутствуют в срезе
     existing_banks = [b for b in APPS.keys() if b in df_latest.index]
     df_stars = df_latest.loc[existing_banks, stars_columns]
 
-    # Строим сгруппированные вертикальные столбцы через pandas
+    # ИСПРАВЛЕНО: Переносим управление наклоном текста прямо в вызов plot через rot
     df_stars.plot(
         kind="bar",
         ax=ax2,
         color=colors,
         edgecolor="darkgray",
         linewidth=0.5,
-        width=0.8
+        width=0.8,
+        rot=15
     )
     
-    # Включаем логарифмическую шкалу по оси Y, как на оригинале (10^1, 10^2, 10^3...)
+    # Включаем логарифмическую шкалу по оси Y
     ax2.set_yscale("log")
     ax2.set_ylabel("Количество выставленных оценок (Log scale)", fontsize=10)
     ax2.set_xlabel("", fontsize=10)
     ax2.grid(True, which="both", linestyle="--", alpha=0.3)
     
-    # Поворачиваем имена банков горизонтально или слегка под углом для читаемости
-    ax2.set_xticklabels(existing_banks, rotation=15, ha="right", fontsize=9)
+    # ИСПРАВЛЕНО: Безопасное выравнивание подписей по правому краю без вызова set_xticklabels
+    plt.setp(ax2.get_xticklabels(), ha="right", fontsize=9)
     
     ax2.legend(
         stars_labels,
@@ -207,6 +207,7 @@ def generate_report_and_visualization():
         loc="upper left",
         fontsize=9
     )
+
 
     # Корректируем расположение элементов и сохраняем
     plt.tight_layout()
