@@ -140,7 +140,9 @@ def generate_report_and_visualization():
     # График 1: Текущий комбинированный рейтинг банков
     banks = df_latest["Bank"]
     ratings = df_latest["Rating"]
-    colors = plt.cm.get_cmap("viridis", len(banks))(np.linspace(0, 1, len(banks)))
+    
+    # ИСПРАВЛЕНО: Используем современный способ получения палитры цветов
+    colors = plt.colormaps["viridis"](np.linspace(0, 1, len(banks)))
 
     bars = ax1.barh(banks, ratings, color=colors, edgecolor="black", height=0.6)
     ax1.set_xlim(0, 5.5)
@@ -195,6 +197,7 @@ def generate_report_and_visualization():
     print(
         f"[Успешно] Комплексный архивный дашборд сохранен как '{DASHBOARD_FILE}'"
     )
+
 
 
 if __name__ == "__main__":
