@@ -161,7 +161,7 @@ def generate_report_and_visualization():
     ax1.set_ylabel("Средний балл приложения", fontsize=10)
     ax1.set_xlabel("Дата еженедельного среза", fontsize=10)
     ax1.grid(True, linestyle="--", alpha=0.5)
-    ax1.legend(loc="lower left", fontsize=8[-1])
+    ax1.legend(loc="lower left", fontsize=8)
 
     # -------------------------------------------------------------
     # ГРАФИК 2: Детализация структуры оценок (Вертикальный сгруппированный)
