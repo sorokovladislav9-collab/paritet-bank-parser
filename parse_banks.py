@@ -40,12 +40,11 @@ DASHBOARD_FILE = f"dashboard_{CURRENT_DATE}.png"
 
 
 def collect_store_data():
-    """Сбор текущих срезов и точной детализации оценок (только Google Play)."""
     apple_scraper = AppStoreScraper()
     parsed_rows = []
 
     print(
-        f"Сбор данных и детальной структуры оценок на дату: {CURRENT_DATE}"
+        f"Сбор оценок на дату: {CURRENT_DATE}"
     )
 
     for bank, ids in APPS.items():
@@ -117,13 +116,12 @@ def collect_store_data():
                 ]
             )
         writer.writerows(parsed_rows)
-    print(f"[Успешно] Текущие данные добавлены в сквозной реестр: {CSV_FILE}")
+    print(f"Данные добавлены в историю: {CSV_FILE}")
 
 
 def generate_report_and_visualization():
-    """Генерация графиков в точном соответствии с исходным визуальным стилем."""
     if not os.path.isfile(CSV_FILE):
-        print(f"[Ошибка] Файл {CSV_FILE} не найден. Нечего визуализировать.")
+        print(f"Файл {CSV_FILE} не найден.")
         return
 
     df = pd.read_csv(CSV_FILE)
@@ -138,7 +136,7 @@ def generate_report_and_visualization():
     fig.suptitle(f"Отчет по мобильным приложениям (Срез {CURRENT_DATE})", fontsize=14, weight="bold")
 
     
-    ax1.set_title("1. Динамика общих рейтингов розничных приложений", fontsize=11, weight="bold", pad=10)
+    ax1.set_title("1. Динамика общих рейтингов", fontsize=11, weight="bold", pad=10)
     
     for bank in APPS.keys():
         bank_df = df[df["Bank"] == bank]
@@ -182,7 +180,7 @@ def generate_report_and_visualization():
     )
     
     ax2.set_yscale("log")
-    ax2.set_ylabel("Количество выставленных оценок (Log scale)", fontsize=10)
+    ax2.set_ylabel("Количество оценок (Log scale)", fontsize=10)
     ax2.set_xlabel("", fontsize=10)
     ax2.grid(True, which="both", linestyle="--", alpha=0.3)
     
@@ -201,7 +199,7 @@ def generate_report_and_visualization():
     plt.savefig(DASHBOARD_FILE, dpi=150)
     plt.close()
 
-    print(f"[Успешно] Комплексный архивный дашборд сохранен как '{DASHBOARD_FILE}'")
+    print(f"Дашборд сохранен как '{DASHBOARD_FILE}'")
 
 
 
@@ -209,4 +207,4 @@ def generate_report_and_visualization():
 if __name__ == "__main__":
     collect_store_data()
     generate_report_and_visualization()
-    print("\n[Выполнение завершено] Данные и дашборд успешно заархивированы.")
+    print("\nДанные и дашборд успешно архивированы.")
