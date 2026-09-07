@@ -11,9 +11,11 @@ from itunes_app_scraper.scraper import AppStoreScraper
 
 warnings.filterwarnings("ignore")
 
-# Список банковских приложений для мониторинга
 APPS = {
-    "Paritetbank (iParitet)": {"play_id": "by.iparitet", "apple_id": "1543156711"},
+    "Paritetbank (iParitet)": {
+        "play_id": "by.iparitet", 
+        "apple_id": "1543156711"
+    },
     "Belarusbank (M-Belarusbank)": {
         "play_id": "com.mobicon.mbank2.belarusbank",
         "apple_id": "549469274",
@@ -27,7 +29,10 @@ APPS = {
         "play_id": "com.iskra.mobile",
         "apple_id": "6480586304",
     },
-    "Alfa-Bank (INSNC)": {"play_id": "by.alfabank.app.insnc3", "apple_id": None},
+    "Alfa-Bank (INSNC)": {
+        "play_id": "by.alfabank.app.insnc3", 
+        "apple_id": None
+    },
 }
 
 CSV_FILE = "banking_apps_history.csv"
@@ -45,7 +50,6 @@ def collect_store_data():
     )
 
     for bank, ids in APPS.items():
-        # Инициализируем переменные для Google Play
         play_rating, p1, p2, p3, p4, p5 = None, 0, 0, 0, 0, 0
         try:
             gp_info = gp_app(ids["play_id"], lang="ru", country="by")
@@ -62,7 +66,6 @@ def collect_store_data():
         except Exception as e:
             print(f"  [Ошибка GP] {bank}: {e}")
 
-        # Собираем только средний рейтинг Apple (без симуляции звезд)
         apple_rating = None
         if ids["apple_id"]:
             try:
@@ -74,14 +77,12 @@ def collect_store_data():
             except Exception as e:
                 print(f"  [Ошибка AS] {bank}: {e}")
 
-        # Теперь в итоговый реестр идут только реальные оценки из Google Play
         total_1 = p1
         total_2 = p2
         total_3 = p3
         total_4 = p4
         total_5 = p5
 
-        # Вычисляем комбинированный рейтинг (среднее между GP и App Store, если оба доступны)
         if play_rating and apple_rating:
             combined_rating = round((play_rating + apple_rating) / 2, 2)
         else:
@@ -100,7 +101,6 @@ def collect_store_data():
             ]
         )
 
-    # Запись результатов в сквозной CSV-файл
     file_exists = os.path.isfile(CSV_FILE)
     with open(CSV_FILE, mode="a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
@@ -127,29 +127,20 @@ def generate_report_and_visualization():
         print(f"[Ошибка] Файл {CSV_FILE} не найден. Нечего визуализировать.")
         return
 
-    # Читаем данные
     df = pd.read_csv(CSV_FILE)
     
-    # Сортируем по дате для правильного отображения временных линий
     df["Date"] = pd.to_datetime(df["Date"])
     df = df.sort_values("Date")
     df["Date_Str"] = df["Date"].dt.strftime("%Y-%m-%d")
 
-    # ИСПРАВЛЕНИЕ ДУБЛИКАТОВ: Если скрипт запускался несколько раз за один день, 
-    # оставляем только последнюю валидную запись для каждой пары Дата + Банк.
     df = df.drop_duplicates(subset=["Date_Str", "Bank"], keep="last")
 
-    # Создаем холст (1 строка, 2 колонки)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 7))
-    fig.suptitle(f"BI-отчет Финансового департамента по мобильным приложениям (Срез {CURRENT_DATE})", fontsize=14, weight="bold")
+    fig.suptitle(f"Отчет по мобильным приложениям (Срез {CURRENT_DATE})", fontsize=14, weight="bold")
 
-
-    # -------------------------------------------------------------
-    # ГРАФИК 1: Динамика общих рейтингов розничных приложений (Линейный)
-    # -------------------------------------------------------------
+    
     ax1.set_title("1. Динамика общих рейтингов розничных приложений", fontsize=11, weight="bold", pad=10)
     
-    # Группируем данные по банкам и строим линию для каждого
     for bank in APPS.keys():
         bank_df = df[df["Bank"] == bank]
         if not bank_df.empty:
@@ -168,24 +159,19 @@ def generate_report_and_visualization():
     ax1.grid(True, linestyle="--", alpha=0.5)
     ax1.legend(loc="lower left", fontsize=8)
 
-        # -------------------------------------------------------------
-    # ГРАФИК 2: Детализация структуры оценок (Вертикальный сгруппированный)
-    # -------------------------------------------------------------
+    
     ax2.set_title(f"2. Детализация структуры оценок (Срез на {CURRENT_DATE})", fontsize=11, weight="bold", pad=10)
     
-    # Для структуры оценок берем только самую последнюю дату
     latest_date_str = df["Date_Str"].max()
     df_latest = df[df["Date_Str"] == latest_date_str].set_index("Bank")
     
     stars_columns = ["1_Star", "2_Star", "3_Star", "4_Star", "5_Star"]
     stars_labels = ["1★", "2★", "3★", "4★", "5★"]
-    colors = ["#e74c3c", "#e67e22", "#f1c40f", "#3498db", "#2ecc71"] # Цвета под каждую звезду
+    colors = ["#e74c3c", "#e67e22", "#f1c40f", "#3498db", "#2ecc71"] 
 
-    # Перестраиваем структуру датафрейма для сгруппированного графика
     existing_banks = [b for b in APPS.keys() if b in df_latest.index]
     df_stars = df_latest.loc[existing_banks, stars_columns]
 
-    # ИСПРАВЛЕНО: Переносим управление наклоном текста прямо в вызов plot через rot
     df_stars.plot(
         kind="bar",
         ax=ax2,
@@ -196,13 +182,11 @@ def generate_report_and_visualization():
         rot=15
     )
     
-    # Включаем логарифмическую шкалу по оси Y
     ax2.set_yscale("log")
     ax2.set_ylabel("Количество выставленных оценок (Log scale)", fontsize=10)
     ax2.set_xlabel("", fontsize=10)
     ax2.grid(True, which="both", linestyle="--", alpha=0.3)
     
-    # ИСПРАВЛЕНО: Безопасное выравнивание подписей по правому краю без вызова set_xticklabels
     plt.setp(ax2.get_xticklabels(), ha="right", fontsize=9)
     
     ax2.legend(
@@ -214,7 +198,6 @@ def generate_report_and_visualization():
     )
 
 
-    # Корректируем расположение элементов и сохраняем
     plt.tight_layout()
     plt.savefig(DASHBOARD_FILE, dpi=150)
     plt.close()
