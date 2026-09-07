@@ -9,7 +9,6 @@ import pandas as pd
 from google_play_scraper import app as gp_app
 from itunes_app_scraper.scraper import AppStoreScraper
 
-warnings.filterwarnings("ignore")
 
 APPS = {
     "Paritetbank (iParitet)": {
