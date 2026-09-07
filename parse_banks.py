@@ -46,7 +46,7 @@ def collect_store_data():
     parsed_rows = []
 
     print(
-        f"[1/3] Сбор данных и детальной структуры оценок на дату: {CURRENT_DATE}"
+        f"Сбор данных и детальной структуры оценок на дату: {CURRENT_DATE}"
     )
 
     for bank, ids in APPS.items():
